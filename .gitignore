@@ -1,0 +1,11 @@
+# VM/ISO artifacts
+*.iso
+*.img
+*.qcow2
+
+# Local config override
+config/lab.env
+
+# Logs/temp
+*.log
+*.tmp
