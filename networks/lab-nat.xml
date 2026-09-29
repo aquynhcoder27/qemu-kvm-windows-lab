@@ -1,0 +1,9 @@
+<network>
+  <name>lab-kvm-nat</name>
+  <forward mode='nat'/>
+  <ip address='192.168.233.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.233.100' end='192.168.233.199'/>
+    </dhcp>
+  </ip>
+</network>

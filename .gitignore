@@ -1,0 +1,19 @@
+# ISOs — large binary files, never commit
+ISOs/
+*.iso
+
+# VM disk images — binary, tens of GB each
+*.qcow2
+*.img
+*.vmdk
+
+# OS temp files
+.DS_Store
+Thumbs.db
+.temp/
+config.local.sh
+*~
+
+# Editor dirs
+.vscode/
+.idea/
