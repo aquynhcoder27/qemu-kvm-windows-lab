@@ -9,3 +9,6 @@ LAB_FS_UUID="REPLACE_WITH_EXT4_UUID"
 
 # Existing VMs can keep using their current NAT network, for example:
 # LAB_NET="default"
+
+# Optional: preserve the old server VM's DHCP address when replacing its disk.
+# SERVER_MAC="52:54:00:xx:xx:xx"

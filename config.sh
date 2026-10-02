@@ -39,6 +39,9 @@ CLIENT_VCPU=1
 SERVER_DISK_GB=35
 CLIENT_DISK_GB=20
 
+# Optional: keep the server's DHCP identity when replacing its VM.
+SERVER_MAC=""
+
 # --- VM Names ---
 # Changing these after VMs are created will break references.
 VM_SRV="win-srv-01"

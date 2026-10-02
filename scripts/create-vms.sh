@@ -39,7 +39,7 @@ fi
 
 echo "=== Checking ISOs ==="
 MISSING=0
-for iso in "win-server-2022.iso" "virtio-win.iso"; do
+for iso in "win-server-2008.iso" "virtio-win.iso"; do
   if [[ -f "$ISO_DIR/$iso" ]]; then
     echo "  OK: $iso"
   else
@@ -113,10 +113,19 @@ define_without_start() {
 define_server_vm() {
   local name="$1"
   local disk="$LAB_MOUNT/${name}.qcow2"
+  local -a extra_disks=()
+  local network_arg="network=$LAB_NET,model=e1000"
 
   if virsh dominfo "$name" > /dev/null 2>&1; then
     echo "  Already defined (skipped): $name"
     return
+  fi
+
+  if [[ -f "$ISO_DIR/Firefox-115.42.0esr.iso" ]]; then
+    extra_disks+=(--disk "path=$ISO_DIR/Firefox-115.42.0esr.iso,device=cdrom,bus=sata")
+  fi
+  if [[ -n "$SERVER_MAC" ]]; then
+    network_arg+=",mac=$SERVER_MAC"
   fi
 
   define_without_start "$name" \
@@ -124,15 +133,15 @@ define_server_vm() {
     --memory "$SERVER_RAM_MB" \
     --vcpus "$SERVER_VCPU" \
     --cpu host-passthrough \
-    --disk "path=$disk,format=qcow2,bus=virtio,cache=writeback" \
-    --disk "path=$ISO_DIR/virtio-win.iso,device=cdrom,bus=sata" \
-    --cdrom "$ISO_DIR/win-server-2022.iso" \
-    --os-variant win2k22 \
-    --network "network=$LAB_NET,model=virtio" \
+    --disk "path=$disk,format=qcow2,bus=sata,cache=writeback" \
+    --disk "path=$ISO_DIR/win-server-2008.iso,device=cdrom,bus=sata" \
+    "${extra_disks[@]}" \
+    --os-variant win2k8 \
+    --network "$network_arg" \
     --graphics spice,listen=127.0.0.1 \
-    --video qxl \
+    --video vga \
     --channel spicevmc \
-    --boot uefi,menu=on \
+    --boot cdrom,hd,menu=on \
     --features kvm_hidden=on \
     --clock offset=localtime
 }

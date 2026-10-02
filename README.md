@@ -1,7 +1,7 @@
 # lab-kvm
 
 Reusable QEMU/KVM lab for learning Windows system administration and networking.
-The lab has one Windows Server 2022 VM and two Windows 7 VMs. VM images and ISOs
+The lab has one Windows Server 2008 SP2 VM and two Windows 7 VMs. VM images and ISOs
 live on a dedicated ext4 filesystem. This host uses an internal NVMe partition;
 the same UUID checks also support a removable USB SSD.
 
@@ -22,6 +22,8 @@ VMs use that NAT network on **192.168.122.0/24**. The project-owned
 **lab-kvm-nat** network is a template for new labs and is not defined here.
 Keep the local override when reusing these VMs: changing `LAB_NET` alone does
 not move their NICs, and **lab-vm.sh start** checks for a match.
+The host's **default** network now leases **192.168.122.100–254**. Addresses
+**192.168.122.10–12** are reserved in the lab plan for manual guest setup.
 
 On Ubuntu:
 
@@ -49,6 +51,8 @@ Edit **config.local.sh**:
   **setup-disk.sh --format**; leave it unset if the SSD is already formatted.
 - **LAB_NET**: leave the default **lab-kvm-nat** for a new lab. Set **default**
   only if your existing VMs already use that NAT network.
+- **SERVER_MAC**: optional MAC address for the server VM. Keep the old value
+  when replacing that VM if its DHCP address should stay the same.
 
 **config.local.sh** is ignored by Git. VM names and sizes have portable defaults
 in **config.sh**. If you change a VM name after defining it, update the libvirt
@@ -89,7 +93,7 @@ run the two commands in the previous section.
 
 ## Create VMs
 
-Put the ISO files under **/mnt/lab-vms/ISOs/**. Required: **win-server-2022.iso**
+Put the ISO files under **/mnt/lab-vms/ISOs/**. Required: **win-server-2008.iso**
 and **virtio-win.iso**. Optional: **win7.iso**. See
 [ISO-DOWNLOAD-GUIDE.md](ISO-DOWNLOAD-GUIDE.md).
 
@@ -104,11 +108,13 @@ New definitions are created in the shut-off state; start and install one VM at
 a time with **scripts/lab-vm.sh start <vm-name>**. The
 Windows 7 definitions are skipped if **win7.iso** is absent. New Windows 7
 definitions use an emulated **e1000** network adapter so networking works
-without a VirtIO network driver during setup.
+without a VirtIO network driver during setup. The Server 2008 definition uses
+BIOS boot, a SATA system disk and an **e1000** adapter so setup can use built-in
+drivers. If the Firefox ISO is present at creation, it is attached to the server.
 
 | VM | Role | vCPU | RAM | Virtual disk |
 | --- | --- | ---: | ---: | ---: |
-| win-srv-01 | Windows Server 2022 | 2 | 2.5 GiB | 35 GiB |
+| win-srv-01 | Windows Server 2008 SP2 x64 | 2 | 2.5 GiB | 35 GiB |
 | win-w7-01 | Windows 7 client | 1 | 1.5 GiB | 20 GiB |
 | win-w7-02 | Windows 7 client | 1 | 1.5 GiB | 20 GiB |
 
@@ -116,16 +122,18 @@ The helper limits starts to two lab VMs at a time. Shut down Windows inside
 each VM before unplugging removable storage.
 
 After Windows Server Setup has copied files and restarted, an attached installer
-ISO can take the VM back to **Install now**. If this happens, eject only the
-Windows installer ISO from the first SATA CD-ROM (`sda`) while the VM is running:
+ISO can take the VM back to **Install now**. If this happens, use
+`virsh domblklist win-srv-01` to identify the CD-ROM holding
+`win-server-2008.iso`, then eject that target while the VM is running. In a new
+definition made by this script, the target is `sdb`:
 
 ~~~bash
-virsh change-media win-srv-01 sda --eject --live --config
+virsh change-media win-srv-01 sdb --eject --live --config
 ~~~
 
 Then power off the VM and start it again. A reboot requested from the installer
-may leave the existing setup session on screen. The VirtIO ISO in the second
-CD-ROM (`sdb`) can stay attached. The installed server should continue to the
+may leave the existing setup session on screen. The Firefox ISO, when present,
+can stay attached. The installed server should continue to the
 Administrator password setup; enter that password inside the VM.
 
 During Windows 7 setup, if no disk appears, choose **Load Driver** and browse
@@ -168,11 +176,32 @@ The optional **fstab** entry mounts at boot when the filesystem is present; it
 does not mount a removable SSD automatically when plugged in after Ubuntu has
 started. Run **scripts/mount-ssd.sh** after connecting one.
 
+### IPv4 plan for manual guest setup on this host
+
+| VM | Static IPv4 | Subnet mask | Gateway |
+| --- | --- | --- | --- |
+| win-srv-01 | 192.168.122.10 | 255.255.255.0 | 192.168.122.1 |
+| win-w7-01 | 192.168.122.11 | 255.255.255.0 | 192.168.122.1 |
+| win-w7-02 | 192.168.122.12 | 255.255.255.0 | 192.168.122.1 |
+
+Set these addresses inside Windows. The libvirt **default** DHCP range is
+**192.168.122.100–254**, so it will not lease any address in the table.
+Before the server runs DNS, use **192.168.122.1** as DNS if Internet name
+resolution is needed. If you configure the server as a DNS or Active Directory
+server, set its own preferred DNS to **192.168.122.10**, configure a DNS
+forwarder there, and set both clients' preferred DNS to **192.168.122.10**.
+Do not point domain clients directly at **192.168.122.1** for domain lookups.
+After changing each guest, verify with `ipconfig /all`, ping the gateway and
+the other lab guests, then test DNS resolution. The `lab-vm.sh ip` command
+reads DHCP leases and will not show manually assigned addresses.
+
 Inside each Windows guest, use **ipconfig**, **ping 1.1.1.1**, and
 **nslookup example.com** to check the interface, routing and DNS. Set a password
 on the Windows 7 VM before using it online. [Windows 7 is no longer supported](https://learn.microsoft.com/en-us/troubleshoot/windows-client/windows-7-eos-faq/windows-7-end-support-faq-general)
 with regular security updates; connect it to the Internet only for the work
 you need and keep its firewall enabled.
+The same applies to [Windows Server 2008](https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2008),
+whose extended support ended in January 2020.
 
 Older Windows 7 definitions may still use a VirtIO network adapter. In that
 case, the attached **virtio-win.iso** contains **NetKVM/w7/amd64** and

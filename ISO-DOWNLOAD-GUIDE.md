@@ -1,27 +1,32 @@
 # Hướng dẫn tải ISO cho Lab KVM
 
-## 1. Windows Server 2022 Evaluation (Chính thức, Miễn phí 180 ngày)
+## 1. Windows Server 2008 SP2 x64 (bản thường, không phải R2)
 
-**Nguồn**: Microsoft Evaluation Center — hoàn toàn hợp lệ cho học thuật.
+Nếu có quyền truy cập Visual Studio subscription hoặc bộ cài gốc, hãy dùng ISO
+từ nguồn đó. Tên bản x64 tiếng Anh là
+`en_windows_server_2008_with_sp2_x64_dvd_342336.iso`; mã SHA-1 được liệt kê
+[ở đây](https://www.heidoc.net/php/myvsdump_details.php?id=P634F38998Ax64Len)
+là `34c7d726c57b0f8b19ba3b40d1b4044c15fc2029`.
 
-1. Truy cập: https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022
-2. Chọn **ISO downloads** (không cần Azure)
-3. Đăng ký theo hướng dẫn của Microsoft
-4. Tải file ISO
-5. Đổi tên thành `win-server-2022.iso`
-6. Copy vào `/mnt/lab-vms/ISOs/win-server-2022.iso`
+Nếu không có ISO gốc, [Internet Archive lưu bản sao](https://archive.org/details/en_windows_server_2008_with_sp2_x64_dvd_342336_202212).
+Đây là nguồn bên thứ ba; tải xong phải so SHA-1 với giá trị ở trên trước khi dùng.
 
-Lệnh copy nhanh (thay đường dẫn file tải về):
 ```bash
-cp ~/Downloads/SERVER_EVAL_x64FRE_en-us.iso /mnt/lab-vms/ISOs/win-server-2022.iso
+curl -fL --retry 3 --continue-at - \
+  -o /mnt/lab-vms/ISOs/win-server-2008.iso \
+  https://archive.org/download/en_windows_server_2008_with_sp2_x64_dvd_342336_202212/en_windows_server_2008_with_sp2_x64_dvd_342336.iso
+printf '%s  %s\n' \
+  34c7d726c57b0f8b19ba3b40d1b4044c15fc2029 \
+  /mnt/lab-vms/ISOs/win-server-2008.iso | sha1sum --check
 ```
 
-> Microsoft cho biết bản Evaluation hết hạn sau 180 ngày và cần kích hoạt qua
-> Internet trong 10 ngày đầu sau khi cài đặt.
+Windows Server 2008 cần giấy phép hợp lệ để sử dụng. [Microsoft đã kết thúc hỗ
+trợ Server 2008 vào 14/01/2020](https://learn.microsoft.com/en-us/lifecycle/announcements/prepare-end-of-support-2019-2020).
+Chỉ bật kết nối mạng khi cần cho bài lab.
 
 ---
 
-## 2. VirtIO Drivers ISO (Bắt buộc cho Windows nhận disk/NIC)
+## 2. VirtIO Drivers ISO (cho các máy Windows 7)
 
 **Nguồn**: Fedora Project — official, miễn phí.
 
@@ -59,7 +64,7 @@ Windows 10 cần sửa cấu hình tạo VM trước; đặt tên file là `win1
 ```bash
 ls -lh /mnt/lab-vms/ISOs/
 # Phải thấy:
-# win-server-2022.iso
+# win-server-2008.iso
 # virtio-win.iso
 # win7.iso (cần để tạo mới 2 VM Windows 7)
 ```
