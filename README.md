@@ -151,10 +151,10 @@ Use `win-w7-02` for the second client. The VirtIO ISO in `sdb` can stay attached
 Ejecting the Windows installer ISO prevents a later boot from returning to
 the installer; the installed qcow2 image does not need replacing.
 
-`win-w7-02` needs its own Windows identity. Its qcow2 image on this host is
-already partitioned and contains data; inspect the guest before resuming setup
-or reinstalling it. Keep its existing disk image. This lab does not require
-Sysprep or a copy of `win-w7-01`.
+`win-w7-02` is already installed on its own qcow2 image on this host. Keep
+that image; this lab does not require Sysprep or a copy of `win-w7-01`.
+Its Windows installer ISO remains attached at `sda`; eject it after confirming
+the guest boots from its installed system disk.
 
 ## Daily use and Internet check
 
@@ -184,8 +184,9 @@ started. Run **scripts/mount-ssd.sh** after connecting one.
 | win-w7-01 | 192.168.122.11 | 255.255.255.0 | 192.168.122.1 |
 | win-w7-02 | 192.168.122.12 | 255.255.255.0 | 192.168.122.1 |
 
-Set these addresses inside Windows. The libvirt **default** DHCP range is
-**192.168.122.100–254**, so it will not lease any address in the table.
+These addresses are currently set inside the three Windows guests on this host.
+The libvirt **default** DHCP range is **192.168.122.100–254**, so it will not
+lease any address in the table.
 Before the server runs DNS, use **192.168.122.1** as DNS if Internet name
 resolution is needed. If you configure the server as a DNS or Active Directory
 server, set its own preferred DNS to **192.168.122.10**, configure a DNS
@@ -210,6 +211,50 @@ Controller by browsing to the folder matching the guest's system type. Then
 check **ipconfig /all** for a DHCP address from the configured NAT network.
 If driver installation reports a signature error, inspect the error before
 changing the VM's network model or Windows driver-signing settings.
+
+## PowerShell, OpenSSH and guest firewall on this host
+
+As of 2026-10-02, all three guests have OpenSSH for Windows 8.1p1
+(`v8.1.0.0p1-Beta`) installed, with `sshd` running and set to start automatically.
+Server 2008 SP2 x64 also has PowerShell 2.0 (`KB968930`); installation required
+one restart. The two Windows 7 clients already included PowerShell.
+Ubuntu reached TCP port 22 on all three guests. Ping succeeded in both
+directions between Ubuntu and each guest and between every pair of guests.
+This checks network reachability and the SSH listener; it does not test SSH
+password authentication.
+
+The installation media is `/mnt/lab-vms/ISOs/Lab-Admin-Tools.iso`. It contains
+`Windows6.0-KB968930-x64.msu`, `OpenSSH-Win64`, `OpenSSH-Win32` and the
+scripts from [`guest-tools/`](guest-tools/). The Microsoft package came from
+[Windows Update Catalog KB968930](https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930)
+(SHA-1 `4de013d593181a2a04217ce3b0e7536ab56995aa`). OpenSSH came from the
+[Win32-OpenSSH v8.1.0.0p1-Beta release](https://github.com/PowerShell/Win32-OpenSSH/releases/tag/v8.1.0.0p1-Beta)
+(Win64 ZIP SHA-256 `c99240af89452610f66b7ce54c4fa3180b66aae2bc326afc2aac8fc1dd48f488`;
+Win32 ZIP SHA-256 `88aaf9eafc64a11d2ba0894a1c24608f1b6d69408b19bb7b15287338fea76dd0`).
+The packages are stored in the ISO, not in Git.
+
+To repeat the setup in a fresh guest, attach the tools ISO, find its drive
+letter in Explorer, and run these commands from an elevated Command Prompt
+(replace `D:` with that letter):
+
+~~~cmd
+D:\P.cmd
+~~~
+
+Run `P.cmd` only on Server 2008 SP2 x64, then restart Windows. After the
+restart, run the following on the server or either Windows 7 client:
+
+~~~cmd
+D:\S.cmd
+~~~
+
+`S.cmd` installs and starts `sshd`, opens inbound TCP 22, and calls
+`enable-lab-network.cmd` (also available as `N.cmd` on the ISO) to permit
+inbound ICMPv4 echo. Both firewall rules accept traffic only from
+`192.168.122.0/24` and apply to all Windows firewall profiles. The script
+uses the 64-bit command interpreter when launched from 32-bit PowerShell on
+64-bit Windows. The tools ISO was ejected after installation; the Firefox ISO
+was restored to its earlier drives.
 
 ## Put Firefox installers in the Windows guests
 
