@@ -50,7 +50,7 @@ fi
 
 [[ -n "$LAB_FS_UUID" && "$LAB_FS_UUID" != REPLACE_WITH_EXT4_UUID ]] ||
   die "Set LAB_FS_UUID in config.local.sh first."
-device=$(findfs "UUID=$LAB_FS_UUID") || die "SSD with UUID=$LAB_FS_UUID is not connected."
+device=$(findfs "UUID=$LAB_FS_UUID") || die "Lab filesystem with UUID=$LAB_FS_UUID was not found."
 [[ $(blkid -s TYPE -o value "$device") == ext4 ]] || die "$device is not ext4."
 
 if ! mountpoint -q "$LAB_MOUNT"; then

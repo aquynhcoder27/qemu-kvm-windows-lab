@@ -15,7 +15,7 @@ require_lab_storage() {
     die "Set LAB_FS_UUID in config.local.sh first."
 
   mountpoint -q "$LAB_MOUNT" ||
-    die "$LAB_MOUNT is not mounted. Connect the SSD and run: sudo scripts/setup-disk.sh"
+    die "$LAB_MOUNT is not mounted. Run: sudo scripts/setup-disk.sh"
 
   local actual_uuid actual_type
   actual_uuid=$(findmnt -nro UUID --mountpoint "$LAB_MOUNT") ||

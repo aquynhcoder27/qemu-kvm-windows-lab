@@ -21,9 +21,9 @@ case "$cmd" in
     echo "=== Storage ==="
     virsh pool-info "$LAB_POOL" 2>/dev/null | grep -E "Name|State|Capacity|Available" || echo "Pool not found"
     if mountpoint -q "$LAB_MOUNT"; then
-      echo "SSD UUID: $(findmnt -nro UUID --mountpoint "$LAB_MOUNT") (expected: $LAB_FS_UUID)"
+      echo "Storage UUID: $(findmnt -nro UUID --mountpoint "$LAB_MOUNT") (expected: $LAB_FS_UUID)"
     else
-      echo "SSD not mounted at $LAB_MOUNT"
+      echo "Lab storage not mounted at $LAB_MOUNT"
     fi
     ;;
 
@@ -45,7 +45,7 @@ case "$cmd" in
 
     disk_source=$(virsh domblklist "$vm" --details | awk '$2 == "disk" {print $4; exit}')
     [[ "$disk_source" == "$LAB_MOUNT/$vm.qcow2" && -f "$disk_source" && ! -L "$disk_source" ]] ||
-      die "VM disk is missing or outside the verified SSD: $disk_source"
+      die "VM disk is missing or outside the verified storage: $disk_source"
     nic_network=$(virsh domiflist "$vm" | awk '$2 == "network" {print $3; exit}')
     [[ "$nic_network" == "$LAB_NET" ]] ||
       die "VM uses network '$nic_network', but config.local.sh specifies '$LAB_NET'."

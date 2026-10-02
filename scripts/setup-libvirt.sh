@@ -18,7 +18,7 @@ else
   virsh pool-define-as "$LAB_POOL" dir --target "$LAB_MOUNT"
 fi
 
-# A directory pool must not activate at boot while the removable disk is absent.
+# Keep activation explicit so the mount is verified before libvirt uses this path.
 virsh pool-autostart --disable "$LAB_POOL"
 if ! pool_is_active; then
   virsh pool-start "$LAB_POOL"

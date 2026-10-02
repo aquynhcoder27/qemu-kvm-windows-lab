@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# create-vms.sh — Create disk images and define all lab VMs in libvirt.
+# create-vms.sh — Create disk images and define all lab VMs without starting them.
 # Safe to re-run; skips VMs and disks that already exist.
 set -euo pipefail
 
@@ -93,6 +93,23 @@ virsh pool-refresh "$LAB_POOL"
 echo ""
 echo "=== Defining VMs ==="
 
+define_without_start() {
+  local name="$1"
+  shift
+  local xml_file
+  xml_file=$(mktemp)
+  if ! virt-install "$@" --print-xml 1 > "$xml_file"; then
+    rm -f "$xml_file"
+    die "Could not generate definition for $name."
+  fi
+  if ! virsh define "$xml_file"; then
+    rm -f "$xml_file"
+    die "Could not define $name."
+  fi
+  rm -f "$xml_file"
+  echo "  Defined (shut off): $name"
+}
+
 define_server_vm() {
   local name="$1"
   local disk="$LAB_MOUNT/${name}.qcow2"
@@ -102,7 +119,7 @@ define_server_vm() {
     return
   fi
 
-  virt-install \
+  define_without_start "$name" \
     --name "$name" \
     --memory "$SERVER_RAM_MB" \
     --vcpus "$SERVER_VCPU" \
@@ -117,10 +134,7 @@ define_server_vm() {
     --channel spicevmc \
     --boot uefi,menu=on \
     --features kvm_hidden=on \
-    --clock offset=localtime \
-    --noautoconsole \
-    --noreboot
-  echo "  Defined: $name"
+    --clock offset=localtime
 }
 
 define_win7_vm() {
@@ -137,7 +151,7 @@ define_win7_vm() {
     return
   fi
 
-  virt-install \
+  define_without_start "$name" \
     --name "$name" \
     --memory "$CLIENT_RAM_MB" \
     --vcpus "$CLIENT_VCPU" \
@@ -152,10 +166,7 @@ define_win7_vm() {
     --channel spicevmc \
     --boot cdrom,hd,menu=on \
     --features kvm_hidden=on \
-    --clock offset=localtime \
-    --noautoconsole \
-    --noreboot
-  echo "  Defined: $name"
+    --clock offset=localtime
 }
 
 define_server_vm "$VM_SRV"
