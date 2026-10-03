@@ -1,27 +1,27 @@
 # Hướng dẫn tải ISO cho Lab KVM
 
-## 1. Windows Server 2008 SP2 x64 (bản thường, không phải R2)
+## 1. Windows Server 2008 R2 SP1 x64
 
 Nếu có quyền truy cập Visual Studio subscription hoặc bộ cài gốc, hãy dùng ISO
-từ nguồn đó. Tên bản x64 tiếng Anh là
-`en_windows_server_2008_with_sp2_x64_dvd_342336.iso`; mã SHA-1 được liệt kê
-[ở đây](https://www.heidoc.net/php/myvsdump_details.php?id=P634F38998Ax64Len)
-là `34c7d726c57b0f8b19ba3b40d1b4044c15fc2029`.
+từ nguồn đó. Tên bộ cài tiếng Anh chứa các bản Standard, Enterprise, Datacenter
+và Web là `en_windows_server_2008_r2_with_sp1_x64_dvd_617601.iso`.
+[Danh mục ảnh gốc](https://www.heidoc.net/php/myvsdump_details.php?id=P781F44782Ax64Len)
+ghi SHA-1 `d3fd7bf85ee1d5bdd72de5b2c69a7b470733cd0a`.
 
-Nếu không có ISO gốc, [Internet Archive lưu bản sao](https://archive.org/details/en_windows_server_2008_with_sp2_x64_dvd_342336_202212).
+Nếu không có ISO gốc, [Internet Archive lưu bản sao](https://archive.org/details/en_windows_server_2008_r2_with_sp1_x64_dvd_617601_202405).
 Đây là nguồn bên thứ ba; tải xong phải so SHA-1 với giá trị ở trên trước khi dùng.
 
 ```bash
 curl -fL --retry 3 --continue-at - \
-  -o /mnt/lab-vms/ISOs/win-server-2008.iso \
-  https://archive.org/download/en_windows_server_2008_with_sp2_x64_dvd_342336_202212/en_windows_server_2008_with_sp2_x64_dvd_342336.iso
+  -o /mnt/lab-vms/ISOs/win-server-2008-r2-sp1.iso \
+  https://archive.org/download/en_windows_server_2008_r2_with_sp1_x64_dvd_617601_202405/en_windows_server_2008_r2_with_sp1_x64_dvd_617601.iso
 printf '%s  %s\n' \
-  34c7d726c57b0f8b19ba3b40d1b4044c15fc2029 \
-  /mnt/lab-vms/ISOs/win-server-2008.iso | sha1sum --check
+  d3fd7bf85ee1d5bdd72de5b2c69a7b470733cd0a \
+  /mnt/lab-vms/ISOs/win-server-2008-r2-sp1.iso | sha1sum --check
 ```
 
-Windows Server 2008 cần giấy phép hợp lệ để sử dụng. [Microsoft đã kết thúc hỗ
-trợ Server 2008 vào 14/01/2020](https://learn.microsoft.com/en-us/lifecycle/announcements/prepare-end-of-support-2019-2020).
+Windows Server 2008 R2 cần giấy phép hợp lệ để sử dụng. [Microsoft đã kết thúc hỗ
+trợ Server 2008 R2 vào 14/01/2020](https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2008-r2).
 Chỉ bật kết nối mạng khi cần cho bài lab.
 
 ---
@@ -64,7 +64,7 @@ Windows 10 cần sửa cấu hình tạo VM trước; đặt tên file là `win1
 ```bash
 ls -lh /mnt/lab-vms/ISOs/
 # Phải thấy:
-# win-server-2008.iso
+# win-server-2008-r2-sp1.iso
 # virtio-win.iso
 # win7.iso (cần để tạo mới 2 VM Windows 7)
 ```

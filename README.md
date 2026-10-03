@@ -1,7 +1,7 @@
 # lab-kvm
 
 Reusable QEMU/KVM lab for learning Windows system administration and networking.
-The lab has one Windows Server 2008 SP2 VM and two Windows 7 VMs. VM images and ISOs
+The lab has one Windows Server 2008 R2 SP1 VM and two Windows 7 VMs. VM images and ISOs
 live on a dedicated ext4 filesystem. This host uses an internal NVMe partition;
 the same UUID checks also support a removable USB SSD.
 
@@ -93,7 +93,7 @@ run the two commands in the previous section.
 
 ## Create VMs
 
-Put the ISO files under **/mnt/lab-vms/ISOs/**. Required: **win-server-2008.iso**
+Put the ISO files under **/mnt/lab-vms/ISOs/**. Required: **win-server-2008-r2-sp1.iso**
 and **virtio-win.iso**. Optional: **win7.iso**. See
 [ISO-DOWNLOAD-GUIDE.md](ISO-DOWNLOAD-GUIDE.md).
 
@@ -108,13 +108,13 @@ New definitions are created in the shut-off state; start and install one VM at
 a time with **scripts/lab-vm.sh start <vm-name>**. The
 Windows 7 definitions are skipped if **win7.iso** is absent. New Windows 7
 definitions use an emulated **e1000** network adapter so networking works
-without a VirtIO network driver during setup. The Server 2008 definition uses
+without a VirtIO network driver during setup. The Server 2008 R2 definition uses
 BIOS boot, a SATA system disk and an **e1000** adapter so setup can use built-in
 drivers. If the Firefox ISO is present at creation, it is attached to the server.
 
 | VM | Role | vCPU | RAM | Virtual disk |
 | --- | --- | ---: | ---: | ---: |
-| win-srv-01 | Windows Server 2008 SP2 x64 | 2 | 2.5 GiB | 35 GiB |
+| win-srv-01 | Windows Server 2008 R2 SP1 Standard x64 | 2 | 2.5 GiB | 35 GiB |
 | win-w7-01 | Windows 7 client | 1 | 1.5 GiB | 20 GiB |
 | win-w7-02 | Windows 7 client | 1 | 1.5 GiB | 20 GiB |
 
@@ -124,7 +124,7 @@ each VM before unplugging removable storage.
 After Windows Server Setup has copied files and restarted, an attached installer
 ISO can take the VM back to **Install now**. If this happens, use
 `virsh domblklist win-srv-01` to identify the CD-ROM holding
-`win-server-2008.iso`, then eject that target while the VM is running. In a new
+`win-server-2008-r2-sp1.iso`, then eject that target while the VM is running. In a new
 definition made by this script, the target is `sdb`:
 
 ~~~bash
@@ -201,7 +201,7 @@ Inside each Windows guest, use **ipconfig**, **ping 1.1.1.1**, and
 on the Windows 7 VM before using it online. [Windows 7 is no longer supported](https://learn.microsoft.com/en-us/troubleshoot/windows-client/windows-7-eos-faq/windows-7-end-support-faq-general)
 with regular security updates; connect it to the Internet only for the work
 you need and keep its firewall enabled.
-The same applies to [Windows Server 2008](https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2008),
+The same applies to [Windows Server 2008 R2](https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2008-r2),
 whose extended support ended in January 2020.
 
 Older Windows 7 definitions may still use a VirtIO network adapter. In that
@@ -214,35 +214,33 @@ changing the VM's network model or Windows driver-signing settings.
 
 ## PowerShell, OpenSSH and guest firewall on this host
 
-As of 2026-10-02, all three guests have OpenSSH for Windows 8.1p1
-(`v8.1.0.0p1-Beta`) installed, with `sshd` running and set to start automatically.
-Server 2008 SP2 x64 also has PowerShell 2.0 (`KB968930`); installation required
-one restart. The two Windows 7 clients already included PowerShell.
-Ubuntu reached TCP port 22 on all three guests. Ping succeeded in both
-directions between Ubuntu and each guest and between every pair of guests.
-This checks network reachability and the SSH listener; it does not test SSH
-password authentication.
+As of 2026-10-03, the server is Windows Server 2008 R2 SP1 Standard x64
+(Windows version `6.1.7601`). It includes PowerShell 2.0. All three guests
+have OpenSSH for Windows 8.1p1 (`v8.1.0.0p1-Beta`) installed, with `sshd`
+configured for automatic startup. After rebooting the server, Ubuntu
+successfully opened an interactive SSH session as Administrator. The three
+Windows guests and Ubuntu can ping each other on the lab subnet. The server
+uses `192.168.122.10`; the clients use `.11` and `.12`.
+
+The previous Windows Server 2008 SP2 installation was replaced because its
+OpenSSH `sshd.exe` crashed on incoming connections, despite TCP port 22 being
+open. This matches an [upstream Win32-OpenSSH issue](https://github.com/PowerShell/Win32-OpenSSH/issues/1120).
+Windows Server 2008 R2 does not include the newer OpenSSH optional feature;
+that feature starts with [Windows Server 2019](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh-overview).
 
 The installation media is `/mnt/lab-vms/ISOs/Lab-Admin-Tools.iso`. It contains
-`Windows6.0-KB968930-x64.msu`, `OpenSSH-Win64`, `OpenSSH-Win32` and the
-scripts from [`guest-tools/`](guest-tools/). The Microsoft package came from
-[Windows Update Catalog KB968930](https://www.catalog.update.microsoft.com/Search.aspx?q=KB968930)
-(SHA-1 `4de013d593181a2a04217ce3b0e7536ab56995aa`). OpenSSH came from the
+`OpenSSH-Win64`, `OpenSSH-Win32` and the scripts from
+[`guest-tools/`](guest-tools/). It also contains the obsolete
+`Windows6.0-KB968930-x64.msu` package and `P.cmd` for the former Server 2008
+SP2 VM; **do not run `P.cmd` on Server 2008 R2**. OpenSSH came from the
 [Win32-OpenSSH v8.1.0.0p1-Beta release](https://github.com/PowerShell/Win32-OpenSSH/releases/tag/v8.1.0.0p1-Beta)
 (Win64 ZIP SHA-256 `c99240af89452610f66b7ce54c4fa3180b66aae2bc326afc2aac8fc1dd48f488`;
 Win32 ZIP SHA-256 `88aaf9eafc64a11d2ba0894a1c24608f1b6d69408b19bb7b15287338fea76dd0`).
 The packages are stored in the ISO, not in Git.
 
 To repeat the setup in a fresh guest, attach the tools ISO, find its drive
-letter in Explorer, and run these commands from an elevated Command Prompt
+letter in Explorer, and run this command from an elevated Command Prompt
 (replace `D:` with that letter):
-
-~~~cmd
-D:\P.cmd
-~~~
-
-Run `P.cmd` only on Server 2008 SP2 x64, then restart Windows. After the
-restart, run the following on the server or either Windows 7 client:
 
 ~~~cmd
 D:\S.cmd
@@ -253,8 +251,8 @@ D:\S.cmd
 inbound ICMPv4 echo. Both firewall rules accept traffic only from
 `192.168.122.0/24` and apply to all Windows firewall profiles. The script
 uses the 64-bit command interpreter when launched from 32-bit PowerShell on
-64-bit Windows. The tools ISO was ejected after installation; the Firefox ISO
-was restored to its earlier drives.
+64-bit Windows. On this host, the tools ISO is currently attached to the
+server's `sdb` CD-ROM and the Firefox ISO is attached to `sdc`.
 
 ## Put Firefox installers in the Windows guests
 

@@ -39,7 +39,7 @@ fi
 
 echo "=== Checking ISOs ==="
 MISSING=0
-for iso in "win-server-2008.iso" "virtio-win.iso"; do
+for iso in "win-server-2008-r2-sp1.iso" "virtio-win.iso"; do
   if [[ -f "$ISO_DIR/$iso" ]]; then
     echo "  OK: $iso"
   else
@@ -134,9 +134,9 @@ define_server_vm() {
     --vcpus "$SERVER_VCPU" \
     --cpu host-passthrough \
     --disk "path=$disk,format=qcow2,bus=sata,cache=writeback" \
-    --disk "path=$ISO_DIR/win-server-2008.iso,device=cdrom,bus=sata" \
+    --disk "path=$ISO_DIR/win-server-2008-r2-sp1.iso,device=cdrom,bus=sata" \
     "${extra_disks[@]}" \
-    --os-variant win2k8 \
+    --os-variant win2k8r2 \
     --network "$network_arg" \
     --graphics spice,listen=127.0.0.1 \
     --video vga \
