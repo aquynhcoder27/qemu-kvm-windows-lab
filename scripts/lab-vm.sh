@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 LAB_VMS=("$VM_SRV" "$VM_W7_1" "$VM_W7_2")
-MAX_CONCURRENT=2
+MAX_CONCURRENT=3
 
 cmd="${1:-list}"
 vm="${2:-}"

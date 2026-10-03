@@ -74,5 +74,6 @@ Sau đó chạy:
 ~/lab-kvm/scripts/create-vms.sh
 ```
 
-Để tải Firefox 115 ESR cho Windows 7, đóng gói ISO và gắn vào ba máy ảo,
-xem [mục Firefox trong README](README.md#put-firefox-installers-in-the-windows-guests).
+ISO Firefox 115 ESR hiện dùng cho lab là
+`/mnt/lab-vms/ISOs/Firefox-115.42.0esr.iso`. Kiểm tra media đã gắn vào VM bằng
+`virsh domblklist <ten-vm> --details` trước khi thay đổi CD-ROM.
