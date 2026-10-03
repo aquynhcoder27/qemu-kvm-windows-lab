@@ -7,11 +7,15 @@ ISOs/
 *.img
 *.vmdk
 
+# Agent knowledge
+.agent/
+
 # OS temp files
 .DS_Store
 Thumbs.db
 .temp/
 config.local.sh
+.exercises/
 *~
 
 # Editor dirs

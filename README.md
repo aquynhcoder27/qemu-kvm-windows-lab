@@ -57,6 +57,9 @@ Edit **config.local.sh**:
 **config.local.sh** is ignored by Git. VM names and sizes have portable defaults
 in **config.sh**. If you change a VM name after defining it, update the libvirt
 definition separately.
+This host also has local-only **.agent/** handoff notes and **.exercises/**
+course PDFs. Both directories are ignored by Git and are absent from a fresh
+GitHub checkout.
 
 ## Prepare an existing ext4 SSD
 
@@ -96,6 +99,9 @@ run the two commands in the previous section.
 Put the ISO files under **/mnt/lab-vms/ISOs/**. Required: **win-server-2008-r2-sp1.iso**
 and **virtio-win.iso**. Optional: **win7.iso**. See
 [ISO-DOWNLOAD-GUIDE.md](ISO-DOWNLOAD-GUIDE.md).
+This host also keeps the Firefox installer ISO and `Lab-Admin-Tools.iso` used
+by the current guests. The former Server 2008 SP2 ISO and temporary OpenSSH
+test ISOs were removed on 2026-10-03.
 
 ~~~bash
 scripts/create-vms.sh
@@ -187,18 +193,28 @@ started. Run **scripts/mount-ssd.sh** after connecting one.
 These addresses are currently set inside the three Windows guests on this host.
 The libvirt **default** DHCP range is **192.168.122.100–254**, so it will not
 lease any address in the table.
-Before the server runs DNS, use **192.168.122.1** as DNS if Internet name
-resolution is needed. If you configure the server as a DNS or Active Directory
-server, set its own preferred DNS to **192.168.122.10**, configure a DNS
-forwarder there, and set both clients' preferred DNS to **192.168.122.10**.
+All three guests currently use **192.168.122.1** for DNS. The two Windows 7
+clients previously had static IP addresses and gateways but no usable DNS;
+they could ping `1.1.1.1` while `nslookup example.com` failed. The fix was:
+
+~~~cmd
+netsh interface ip set dns name="Local Area Connection" static 192.168.122.1 primary
+~~~
+
+If you configure the server as a DNS or Active Directory server, set its own
+preferred DNS to **192.168.122.10**, configure a DNS forwarder there, and set
+both clients' preferred DNS to **192.168.122.10**.
 Do not point domain clients directly at **192.168.122.1** for domain lookups.
 After changing each guest, verify with `ipconfig /all`, ping the gateway and
 the other lab guests, then test DNS resolution. The `lab-vm.sh ip` command
 reads DHCP leases and will not show manually assigned addresses.
 
 Inside each Windows guest, use **ipconfig**, **ping 1.1.1.1**, and
-**nslookup example.com** to check the interface, routing and DNS. Set a password
-on the Windows 7 VM before using it online. [Windows 7 is no longer supported](https://learn.microsoft.com/en-us/troubleshoot/windows-client/windows-7-eos-faq/windows-7-end-support-faq-general)
+**nslookup example.com** to check the interface, routing and DNS. On 2026-10-03,
+both Windows 7 clients also loaded `https://example.com` in Firefox, and the
+server resolved the domain and opened an outbound TCP connection to port 443.
+Keep passwords set on the Windows 7 VMs before using them online.
+[Windows 7 is no longer supported](https://learn.microsoft.com/en-us/troubleshoot/windows-client/windows-7-eos-faq/windows-7-end-support-faq-general)
 with regular security updates; connect it to the Internet only for the work
 you need and keep its firewall enabled.
 The same applies to [Windows Server 2008 R2](https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2008-r2),
